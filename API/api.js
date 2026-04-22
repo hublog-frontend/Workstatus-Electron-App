@@ -1,4 +1,4 @@
-const API_BASE_URL = "https://localhost:7263/api";
+let API_BASE_URL = ""; // Will be set dynamically from .env via SystemService.setBaseUrl
 
 // Create a function to get the client, ensuring axios is loaded
 const getApiClient = () => {
@@ -108,10 +108,20 @@ const AlertService = {
   getAlertRules: (orgId) => {
     return apiClient.get(`/Alert/GetAlertRule?OrganizationId=${orgId}`);
   },
+
+  insertAlert: (alertData) => {
+    return apiClient.post("/Alert/InsertAlert", alertData);
+  },
 };
 
 const SystemService = {
   getVersion: () => {
     return apiClient.get("/SystemInfo/GetHublogVersion");
+  },
+  insertOrUpdateSystemInfo: (systemInfo) => {
+    return apiClient.post("/SystemInfo/InsertOrUpdateSystemInfo", systemInfo);
+  },
+  setBaseUrl: (url) => {
+    if (apiClient) apiClient.defaults.baseURL = url;
   },
 };

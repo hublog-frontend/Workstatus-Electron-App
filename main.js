@@ -8,6 +8,7 @@ const {
   Tray,
   Menu,
 } = require("electron/main");
+require("dotenv").config();
 const path = require("node:path");
 const fs = require("node:fs");
 
@@ -19,6 +20,8 @@ let isQuitting = false;
 try {
   require("electron-reloader")(module);
 } catch (_) {}
+
+const os = require("node:os");
 
 function createWindow() {
   const win = new BrowserWindow({
@@ -70,15 +73,6 @@ function createWindow() {
       const source = sources[0]; // Capture primary screen
       const dataUrl = source.thumbnail.toDataURL();
 
-      // Optional: also save locally for debug path sync
-      const screenshotDir = path.join(__dirname, "screenshots");
-      if (!fs.existsSync(screenshotDir)) {
-        fs.mkdirSync(screenshotDir, { recursive: true });
-      }
-      const fileName = `screenshot-${Date.now()}.png`;
-      const filePath = path.join(screenshotDir, fileName);
-      fs.writeFileSync(filePath, source.thumbnail.toPNG());
-
       return dataUrl;
     } catch (error) {
       console.error("Failed to take screenshot:", error);
@@ -89,6 +83,39 @@ function createWindow() {
   ipcMain.handle("get-system-idle-time", () => {
     const { powerMonitor } = require("electron");
     return powerMonitor.getSystemIdleTime();
+  });
+
+  ipcMain.handle("get-system-info", () => {
+    const interfaces = os.networkInterfaces();
+    let ipAddress = "127.0.0.1";
+    for (const name of Object.keys(interfaces)) {
+      for (const iface of interfaces[name]) {
+        if (iface.family === "IPv4" && !iface.internal) {
+          ipAddress = iface.address;
+          break;
+        }
+      }
+    }
+
+    return {
+      deviceId: os.hostname(),
+      deviceName: os.hostname(),
+      platform: process.platform,
+      osName: os.type(),
+      osBuild: os.release(),
+      systemType: os.arch(),
+      ipAddress: ipAddress,
+      appType: "Electron",
+      hublogVersion: process.env.VERSION || "1.0.0",
+      status: 0,
+    };
+  });
+
+  ipcMain.handle("get-config", () => {
+    return {
+      apiBaseUrl: process.env.API_BASE_URL || "https://localhost:7263/api",
+      version: process.env.VERSION || "1.0.0",
+    };
   });
 }
 

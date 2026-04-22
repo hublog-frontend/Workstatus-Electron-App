@@ -1,6 +1,22 @@
 // Initialize Lucide Icons
 lucide.createIcons();
 
+window.addEventListener("DOMContentLoaded", async () => {
+  if (window.electronAPI && window.electronAPI.getConfig) {
+    try {
+      const config = await window.electronAPI.getConfig();
+      if (config.apiBaseUrl) {
+        SystemService.setBaseUrl(config.apiBaseUrl);
+        if (typeof ScreenshotService !== "undefined") {
+          ScreenshotService.setBaseUrl(config.apiBaseUrl);
+        }
+      }
+    } catch (err) {
+      console.error("Login config load failed:", err);
+    }
+  }
+});
+
 // Close Window Logic
 document.querySelector(".close-btn").addEventListener("click", () => {
   window.electronAPI.closeWindow();

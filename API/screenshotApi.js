@@ -1,4 +1,4 @@
-const SCREENSHOT_API_BASE_URL = "https://localhost:7263/api";
+let SCREENSHOT_API_BASE_URL = "";
 
 const getScreenshotClient = () => {
   if (typeof axios === "undefined") {
@@ -25,7 +25,7 @@ if (screenshotClient) {
     },
     (error) => {
       return Promise.reject(error);
-    }
+    },
   );
 }
 
@@ -40,5 +40,8 @@ const ScreenshotService = {
         SType: "Auto",
       },
     });
+  },
+  setBaseUrl: (url) => {
+    if (screenshotClient) screenshotClient.defaults.baseURL = url;
   },
 };

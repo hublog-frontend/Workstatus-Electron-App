@@ -73,6 +73,7 @@
           <span id="lastSyncText">last sync 0 min ago</span>
         </div>
         <p
+          id="appVersionText"
           style="
             font-size: 11px;
             color: var(--text-muted);
@@ -183,66 +184,23 @@
 
     <!-- Active Break Timer Modal -->
     <div class="modal-overlay" id="breakTimerModal">
-      <div
-        class="modal-card"
-        style="max-width: 300px; border-radius: 12px; padding: 10px"
-      >
-        <div class="modal-body" style="text-align: center; padding: 25px 15px">
-          <p
-            style="
-              color: #4b5563;
-              font-size: 1.1rem;
-              font-weight: 500;
-              margin-bottom: 3px;
-            "
-          >
-            Your on
-          </p>
-          <h2
-            id="timerBreakName"
-            style="
-              color: #dc2626;
-              font-size: 30px;
-              font-weight: 700;
-              margin-bottom: 6px;
-            "
-          >
-            Evening Break !
-          </h2>
+      <div class="modal-card break-timer-card">
+        <div class="modal-body break-timer-body">
+          <div class="break-icon-container" id="modalBreakIcon">
+            <i data-lucide="coffee"></i>
+          </div>
+          <p class="break-subtitle">You're on</p>
+          <h2 id="timerBreakName" class="break-title">Evening Break !</h2>
 
-          <div
-            class="timer-display"
-            id="modalBreakTimer"
-            style="
-              font-size: 46px;
-              font-weight: 700;
-              color: #1f2937;
-              letter-spacing: 1px;
-              margin-bottom: 25px;
-              font-family: sans-serif;
-            "
-          >
-            00:00:00
+          <div class="timer-outer-container">
+            <div class="timer-display-box">
+              <div class="timer-display" id="modalBreakTimer">00:00:00</div>
+            </div>
           </div>
 
-          <button
-            class="btn-confirm"
-            id="modalEndBreak"
-            style="
-              width: 220px;
-              height: 42px;
-              border-radius: 10px;
-              background: #25a17d;
-              color: white;
-              font-size: 16px;
-              font-weight: 600;
-              border: none;
-              cursor: pointer;
-              margin: 0 auto;
-              display: block;
-            "
-          >
-            Resume Working
+          <button class="btn-resume" id="modalEndBreak">
+            <i data-lucide="zap"></i>
+            <span>Resume Working</span>
           </button>
         </div>
       </div>

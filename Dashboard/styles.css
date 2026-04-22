@@ -575,3 +575,116 @@ body {
   font-size: 14px;
   letter-spacing: 0.5px;
 }
+
+/* Break Timer Modal Specific Styles */
+.break-timer-card {
+  max-width: 340px !important;
+  border-radius: 30px !important;
+  padding: 10px !important;
+  background: #ffffff !important;
+  border: none !important;
+}
+
+.break-timer-body {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 20px 10px !important;
+}
+
+.break-icon-container {
+  width: 76px;
+  height: 76px;
+  background: #e9f6f2; /* Light green */
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 20px;
+  border: 4px solid #ffffff;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+}
+
+.break-icon-container i {
+  width: 32px;
+  height: 32px;
+  color: #25a17d; /* Primary green */
+}
+
+.break-subtitle {
+  color: #64748b;
+  font-size: 14px;
+  font-weight: 500;
+  margin-bottom: 5px;
+}
+
+.break-title {
+  color: #1e293b;
+  font-size: 32px;
+  font-weight: 800;
+  margin-bottom: 12px;
+}
+
+.timer-outer-container {
+  position: relative;
+  width: 100%;
+  height: 120px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 30px;
+}
+
+.timer-display-box {
+  position: relative;
+  z-index: 1;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 24px;
+  padding: 20px 20px;
+  min-width: 270px;
+  text-align: center;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+}
+
+.timer-display {
+  font-size: 42px;
+  font-weight: 700;
+  color: #1e293b;
+  letter-spacing: 1px;
+  line-height: 1;
+}
+
+.btn-resume {
+  width: 100%;
+  max-width: 270px;
+  height: 48px;
+  background: #25a17d;
+  color: white;
+  border: none;
+  border-radius: 12px;
+  font-size: 16px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 10px 20px rgba(37, 161, 125, 0.25);
+}
+
+.btn-resume:hover {
+  background: #1d8265;
+  transform: translateY(-2px);
+  box-shadow: 0 15px 30px rgba(37, 161, 125, 0.35);
+}
+
+.btn-resume:active {
+  transform: translateY(0);
+}
+
+.btn-resume i {
+  width: 24px;
+  height: 24px;
+}

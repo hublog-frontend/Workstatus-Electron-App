@@ -20,6 +20,25 @@ window.addEventListener("DOMContentLoaded", async () => {
 
   const user = JSON.parse(userStr);
 
+  // 0. Load Configuration from .env via Main Process
+  if (window.electronAPI && window.electronAPI.getConfig) {
+    try {
+      const config = await window.electronAPI.getConfig();
+      if (config.apiBaseUrl) {
+        SystemService.setBaseUrl(config.apiBaseUrl);
+        if (typeof ScreenshotService !== "undefined") {
+          ScreenshotService.setBaseUrl(config.apiBaseUrl);
+        }
+      }
+      if (config.version) {
+        const versionEl = document.getElementById("appVersionText");
+        if (versionEl) versionEl.textContent = `Version ${config.version}`;
+      }
+    } catch (err) {
+      console.error("Failed to load environment config:", err);
+    }
+  }
+
   // 1. Reset UI/Storage for initialization
   initUIState(user);
   updateLastSyncTimeText();
@@ -510,12 +529,35 @@ let isIdleReported = false;
 let lastIdleApiCallTime = 0; // Track last recurring idle report
 const IDLE_API_TRIGGER_THRESHOLD = 120000; // 2 minutes
 
+let isBreakAlertSent = false;
+let isInactivityAlertSent = false;
+
 let inactivityRules = {
   alertThresholdMs: 10 * 60 * 1000,
   punchoutThresholdMs: 30 * 60 * 1000,
   enableAlerts: true,
   enableTracking: true,
 };
+
+async function handleAlertTrigger(value) {
+  const user = JSON.parse(localStorage.getItem("user"));
+  if (!user) return;
+
+  const alertTriggerDetails = [
+    {
+      UserId: user.id,
+      Triggered: value,
+      TriggeredTime: getISTTime(),
+    },
+  ];
+
+  try {
+    await AlertService.insertAlert(alertTriggerDetails);
+    console.log(`Alert triggered successfully: ${value}`);
+  } catch (err) {
+    console.error(`Error triggering alert: ${value}`, err);
+  }
+}
 
 function startTracking(user) {
   // Reset inactivity on start
@@ -696,6 +738,9 @@ async function handlePunchAction() {
       startTracking(user);
 
       console.log("Punched in successfully.");
+
+      // Immediately collect and send system information (Status: 1 for Punch In)
+      await syncSystemInfo(user.id, 1);
     } else {
       // PUNCH OUT (Now called from confirm modal)
       // Capture one last screenshot before punching out
@@ -728,6 +773,8 @@ async function handlePunchAction() {
       currentAttendance = null;
 
       console.log("Punched out successfully.");
+      // Synchronize system information (Status: 0 for Punch Out)
+      await syncSystemInfo(user.id, 0);
     }
   } catch (error) {
     console.error("Punch action failed", error);
@@ -856,6 +903,7 @@ if (breakBtn && breakModal) {
     try {
       await UserService.insertBreak(breakModel);
       isOnBreak = true;
+      isBreakAlertSent = false; // Reset break alert flag
       resetInactivity(); // Reset inactivity timer when starting break
       currentBreak = { ...breakModel, maxTime: breakTypeRecord.max_Break_Time };
 
@@ -915,9 +963,23 @@ function updateBreakUI(active, name = "") {
     breakBtn.style.display = "flex";
     breakBtn.classList.add("on-break");
 
-    // Open Break Timer Modal
     if (timerBreakName) timerBreakName.textContent = name + " !";
     if (breakTimerModal) breakTimerModal.classList.add("active");
+
+    // Set Dynamic Icon for new UI
+    const iconWrapper = document.getElementById("modalBreakIcon");
+    if (iconWrapper) {
+      const iconName = getIconForBreak(name);
+      iconWrapper.innerHTML = `<i data-lucide="${iconName}"></i>`;
+      lucide.createIcons();
+    }
+
+    // Reset modal colors for new break
+    if (modalBreakTimer) modalBreakTimer.style.color = "";
+    if (modalEndBreak) {
+      modalEndBreak.style.backgroundColor = "";
+      modalEndBreak.style.boxShadow = "";
+    }
 
     if (punchBtn) {
       punchBtn.disabled = true;
@@ -967,12 +1029,27 @@ function startBreakTimer(startTime, maxMinutes) {
       const oH = Math.floor(overMs / 3600000);
       const oM = Math.floor((overMs % 3600000) / 60000);
       const oS = Math.floor((overMs % 60000) / 1000);
-      timeText = `+${String(oH).padStart(2, "0")}:${String(oM).padStart(2, "0")}:${String(oS).padStart(2, "0")}`;
+      timeText = `${String(oH).padStart(2, "0")}:${String(oM).padStart(2, "0")}:${String(oS).padStart(2, "0")}`;
 
       breakBtn.style.backgroundColor = "#ef4444";
       breakBtn.style.color = "white";
       const icon = breakBtn.querySelector("i");
       if (icon) icon.style.color = "white";
+
+      // Make modal timer and button red when exceeded
+      if (modalBreakTimer) {
+        modalBreakTimer.style.color = "var(--danger)";
+      }
+      if (modalEndBreak) {
+        modalEndBreak.style.backgroundColor = "var(--danger)";
+        modalEndBreak.style.boxShadow = "0 10px 20px rgba(239, 68, 68, 0.2)";
+      }
+
+      // Trigger Alert if break exceeds 5 minutes
+      if (overMs > 5 * 60 * 1000 && !isBreakAlertSent) {
+        handleAlertTrigger("Break Time Exceeded");
+        isBreakAlertSent = true;
+      }
 
       triggerBreakAlert();
     }
@@ -988,56 +1065,68 @@ if (modalEndBreak) {
   modalEndBreak.addEventListener("click", handleEndBreak);
 }
 
-let breakAlertInterval = null;
+let breakAlertInterval = false;
+let breakAlertTimeout = null;
 
 function stopBreakTimer() {
-  if (breakTimerInterval) clearInterval(breakTimerInterval);
+  if (breakTimerInterval) {
+    clearInterval(breakTimerInterval);
+    breakTimerInterval = null;
+  }
 
-  // Set flag to false to stop the sound loop
+  // Stop the sound loop
   breakAlertInterval = false;
-  breakTimerInterval = null;
+  if (breakAlertTimeout) {
+    clearTimeout(breakAlertTimeout);
+    breakAlertTimeout = null;
+  }
 
   // Explicitly stop and reset the alert audio
   const notifyAudio = document.getElementById("resumeNotifyAudio");
   if (notifyAudio) {
-    notifyAudio.onended = null; // Remove listener
+    notifyAudio.onended = null;
     notifyAudio.pause();
     notifyAudio.currentTime = 0;
   }
 }
 
 function triggerBreakAlert() {
+  // If alert is already running, don't start another one
   if (breakAlertInterval) return;
 
   const notifyAudio = document.getElementById("resumeNotifyAudio");
   if (!notifyAudio) return;
 
-  // Use a flag to track if we should keep alerting
   breakAlertInterval = true;
 
-  const playAlert = () => {
-    // Check if we should still be playing (breakAlertInterval acts as our "running" flag)
+  const playCycle = () => {
     if (!breakAlertInterval) return;
 
+    // Reset and play
     notifyAudio.currentTime = 0;
-    notifyAudio
-      .play()
-      .then(() => {
-        // Wait for it to end, then wait 20s before next play
-        notifyAudio.onended = () => {
-          if (breakAlertInterval) {
-            setTimeout(playAlert, 20000);
-          }
-        };
-      })
-      .catch((e) => {
-        console.warn("Audio play blocked", e);
-        // Retry in 20s if blocked
-        setTimeout(playAlert, 20000);
-      });
+    
+    // Create a one-time listener for the 'ended' event
+    const handleEnded = () => {
+      notifyAudio.removeEventListener('ended', handleEnded);
+      if (breakAlertInterval) {
+        // Wait 20 seconds AFTER it ends, then play again
+        breakAlertTimeout = setTimeout(playCycle, 20000);
+      }
+    };
+
+    notifyAudio.addEventListener('ended', handleEnded);
+
+    notifyAudio.play().catch((e) => {
+      console.warn("Break alert audio play failed, retrying in 20s:", e);
+      notifyAudio.removeEventListener('ended', handleEnded);
+      if (breakAlertInterval) {
+        breakAlertTimeout = setTimeout(playCycle, 20000);
+      }
+    });
   };
 
-  playAlert();
+  // Start the first play
+  playCycle();
 }
 
 // --- Inactivity Tracking Logic ---
@@ -1049,6 +1138,7 @@ function resetInactivity() {
     console.log("User resumed activity.");
     isIdleReported = false;
   }
+  isInactivityAlertSent = false; // Reset inactivity alert flag
 
   // Hide warning modal if open
   const modal = document.getElementById("inactivityModal");
@@ -1100,14 +1190,20 @@ function startInactivityChecker(user) {
 
   // Attach local events for immediate activity detection
   window.addEventListener("mousemove", (e) => {
+    if (isOnBreak) return;
     // Only reset if modal is NOT active
     const modal = document.getElementById("inactivityModal");
     if (modal && !modal.classList.contains("active")) {
       resetInactivity();
     }
   });
-  window.addEventListener("keydown", resetInactivity);
+
+  window.addEventListener("keydown", () => {
+    if (!isOnBreak) resetInactivity();
+  });
+
   window.addEventListener("click", (e) => {
+    if (isOnBreak) return;
     const modal = document.getElementById("inactivityModal");
     if (modal && !modal.classList.contains("active")) {
       resetInactivity();
@@ -1142,6 +1238,11 @@ function startInactivityChecker(user) {
         modal.classList.add("active");
         lucide.createIcons();
         playInactivitySound();
+
+        if (!isInactivityAlertSent) {
+          handleAlertTrigger("Inactivity Detected");
+          isInactivityAlertSent = true;
+        }
       }
     }
 
@@ -1241,6 +1342,9 @@ async function handleAutoPunchOutAction(user) {
 
     console.log("Auto punch-out successful due to inactivity.");
 
+    // Synchronize system information (Status: 0 for Auto Punch Out)
+    await syncSystemInfo(user.id, 0);
+
     // Optionally redirect or show a specific message
     alert("You have been auto punched out due to inactivity.");
   } catch (e) {
@@ -1266,6 +1370,22 @@ document
       await handleAutoPunchOutAction(user);
     }
   });
+
+async function syncSystemInfo(userId, status) {
+  try {
+    if (window.electronAPI && window.electronAPI.getSystemInfo) {
+      const sysInfo = await window.electronAPI.getSystemInfo();
+      sysInfo.userId = userId;
+      sysInfo.status = status;
+      await SystemService.insertOrUpdateSystemInfo(sysInfo);
+      console.log(
+        `System information (status: ${status}) synchronized successfully.`,
+      );
+    }
+  } catch (err) {
+    console.error(`System information sync failed (status: ${status}):`, err);
+  }
+}
 
 // Update every second
 setInterval(updateClock, 1000);

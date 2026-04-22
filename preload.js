@@ -18,5 +18,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   startTracking: (userId) => ipcRenderer.send('start-tracking', userId),
   stopTracking: () => ipcRenderer.send('stop-tracking'),
   checkSystemIdleTime: () => ipcRenderer.invoke('get-system-idle-time'),
+  getSystemInfo: () => ipcRenderer.invoke('get-system-info'),
+  getConfig: () => ipcRenderer.invoke('get-config'),
   onLogActivity: (callback) => ipcRenderer.on('log-activity', (event, data) => callback(data))
 });
