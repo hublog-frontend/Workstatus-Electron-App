@@ -1,6 +1,6 @@
 {
   "name": "workstatus-electron-app",
-  "version": "1.0.0",
+  "version": "1.2.4",
   "main": "main.js",
   "scripts": {
     "start": "electron .",
