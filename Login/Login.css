@@ -1,0 +1,381 @@
+@import url("https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap");
+
+:root {
+  --primary: #000000;
+  --accent: #22c55e; /* Vibrant green like the image */
+  --bg: #f3f4f6;
+  --text-main: #111827;
+  --text-muted: #6b7280;
+  --border: #e5e7eb;
+  --card-bg: #ffffff;
+  --font-main: "Poppins", sans-serif;
+  --radius-lg: 24px;
+  --radius-md: 12px;
+  --transition: all 0.2s ease;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: var(--font-main);
+  /* background-image: radial-gradient(#d1d5db 1px, transparent 1px); */
+  background-size: 40px 40px;
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  color: var(--text-main);
+  overflow: hidden;
+}
+
+/* Window Header */
+.window-header {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 38px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 0 0 16px;
+  background: #ffffff;
+  border-bottom: 1px solid #e5e7eb;
+  -webkit-app-region: drag;
+  z-index: 1000;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  -webkit-app-region: no-drag;
+}
+
+.top-logo {
+  height: 20px;
+  width: auto;
+}
+
+.close-btn {
+  height: 100%;
+  width: 36px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 12px;
+  color: #64748b;
+  cursor: pointer;
+  -webkit-app-region: no-drag;
+  transition: all 0.1s ease;
+}
+
+.close-btn:hover {
+  background: #e81123;
+  color: white;
+}
+
+.close-btn i {
+  width: 10px;
+  height: 10px;
+}
+
+/* Card */
+.login-card {
+  background: var(--card-bg);
+  width: 100%;
+  max-width: 440px;
+  padding: 20px 48px 48px;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Green Glow at top right corner of card */
+.login-card::before {
+  content: "";
+  position: absolute;
+  top: -100px;
+  right: -100px;
+  width: 300px;
+  height: 300px;
+  pointer-events: none;
+}
+
+.logo-container {
+  margin-bottom: 24px;
+  display: flex;
+  justify-content: center;
+}
+
+.login-logo {
+  max-width: 260px;
+  height: auto;
+}
+
+.header-section {
+  text-align: center;
+  margin-bottom: 32px;
+}
+
+.welcome-text {
+  font-size: 24px;
+  font-weight: 700;
+  margin-top: -10px;
+}
+
+.subtitle-text {
+  font-size: 15px;
+  margin-top: 4px;
+  color: var(--text-muted);
+}
+
+/* Separator */
+.separator {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.separator::before,
+.separator::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
+
+.separator span {
+  font-size: 12px;
+  font-weight: 500;
+  color: #94a3b8;
+  text-transform: uppercase;
+}
+
+/* Form */
+.form-group {
+  text-align: left;
+  margin-bottom: 20px;
+}
+
+label {
+  display: block;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-main);
+  margin-bottom: 8px;
+  margin-left: 2px;
+}
+
+.input-wrapper {
+  position: relative;
+}
+
+input {
+  width: 100%;
+  height: 52px;
+  padding: 0 16px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  font-family: var(--font-main);
+  font-size: 14px;
+  outline: none;
+  transition: var(--transition);
+}
+
+input:focus {
+  border-color: var(--text-main);
+}
+
+.password-toggle {
+  position: absolute;
+  right: 16px;
+  top: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+
+.password-toggle svg {
+  width: 20px;
+  height: 20px;
+  display: block; /* Ensures no tailing descender space */
+}
+
+/* Form Actions */
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  margin-bottom: 32px;
+}
+
+.remember-me {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  color: var(--text-main);
+  cursor: pointer;
+}
+
+.remember-me input {
+  width: 18px;
+  height: 18px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.forgot-link {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-main);
+  text-decoration: none;
+  border-bottom: 1px solid var(--text-main);
+}
+
+/* Main Login Button */
+.login-btn {
+  width: 100%;
+  height: 45px;
+  background-color: #25a17d;
+  color: white;
+  border: none;
+  border-radius: var(--radius-md);
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--transition);
+  margin-bottom: 24px;
+}
+
+.login-btn:hover {
+  transform: translateY(2px);
+}
+
+/* Footer */
+.footer-text {
+  text-align: center;
+  font-size: 14px;
+  color: var(--text-muted);
+}
+
+.footer-text a {
+  font-weight: 700;
+  color: var(--text-main);
+  text-decoration: none;
+}
+
+.footer-text a:hover {
+  text-decoration: underline;
+}
+
+.error-text {
+  color: red;
+  font-size: 13px;
+}
+/* Saved Info Dropdown */
+.saved-info-dropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  width: auto;
+  min-width: 280px;
+  background: #222222;
+  border-radius: 12px;
+  padding: 16px;
+  z-index: 1000;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+  display: none;
+  color: white;
+  animation: fadeIn 0.15s ease-out;
+}
+
+.saved-info-dropdown.active {
+  display: block;
+}
+
+.saved-info-dropdown::before {
+  content: "";
+  position: absolute;
+  top: -8px;
+  left: 24px;
+  width: 0;
+  height: 0;
+  border-left: 8px solid transparent;
+  border-right: 8px solid transparent;
+  border-bottom: 8px solid #222222;
+}
+
+.dropdown-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.dropdown-header span {
+  font-size: 13px;
+  color: #888888;
+  font-weight: 500;
+  letter-spacing: 0.3px;
+}
+
+.close-dropdown {
+  background: none;
+  border: none;
+  color: #ffffff;
+  font-size: 20px;
+  cursor: pointer;
+  line-height: 1;
+  opacity: 0.6;
+  transition: opacity 0.2s;
+  padding: 0;
+  margin-right: -4px;
+}
+
+.close-dropdown:hover {
+  opacity: 1;
+}
+
+.dropdown-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.saved-email-item {
+  font-size: 14px;
+  font-weight: 600;
+  color: #ffffff;
+  cursor: pointer;
+  transition:
+    transform 0.2s,
+    color 0.2s;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 250px;
+}
+
+.saved-email-item:hover {
+  transform: translateX(4px);
+  color: var(--accent);
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

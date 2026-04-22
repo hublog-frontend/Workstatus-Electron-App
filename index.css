@@ -1,0 +1,10 @@
+:root {
+  --primary-font: 'Inter', system-ui, -apple-system, sans-serif;
+}
+
+body {
+  font-family: var(--primary-font);
+  margin: 0;
+  padding: 20px;
+  background-color: #f5f6fa;
+}

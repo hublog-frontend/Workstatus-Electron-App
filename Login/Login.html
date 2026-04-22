@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Workstatus | Login</title>
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; script-src 'self' 'unsafe-inline' https://unpkg.com https://cdn.jsdelivr.net; connect-src 'self' https://localhost:7263; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data:;"
+    />
+    <link rel="stylesheet" href="Login.css" />
+  </head>
+  <body>
+    <!-- Window Header -->
+    <div class="window-header">
+      <div class="header-left">
+        <img src="../images/hublog.ico" alt="Logo" class="top-logo" />
+      </div>
+      <div class="close-btn" id="closeBtn">
+        <i data-lucide="x" style="width: 20px"></i>
+      </div>
+    </div>
+
+    <div class="login-card">
+      <div class="header-section">
+        <div class="logo-container">
+          <img
+            src="../images/logo-re-3.png"
+            alt="Workstatus"
+            class="login-logo"
+          />
+        </div>
+        <h1 class="welcome-text">Welcome back</h1>
+        <p class="subtitle-text">Please enter your details to sign in.</p>
+      </div>
+
+      <!-- Form Section -->
+      <form id="loginForm">
+        <div class="form-group">
+          <label>Email Address</label>
+          <div class="input-wrapper">
+            <input
+              type="email"
+              id="email"
+              placeholder="Enter your email..."
+              required
+              autocomplete="off"
+            />
+            <div class="saved-info-dropdown" id="savedInfoDropdown">
+              <div class="dropdown-header">
+                <span>Saved info</span>
+                <button type="button" class="close-dropdown" id="closeDropdown">&times;</button>
+              </div>
+              <div class="dropdown-list" id="savedEmailsList">
+                <!-- Emails will be populated here -->
+              </div>
+            </div>
+          </div>
+          <span id="emailError" class="error-text"></span>
+        </div>
+
+        <div class="form-group">
+          <label>Password</label>
+          <div class="input-wrapper">
+            <input
+              type="password"
+              id="password"
+              placeholder="••••••••••••"
+              required
+            />
+            <div class="password-toggle" id="togglePassword">
+              <i data-lucide="eye" id="eyeIcon" style="display: none"></i>
+              <i data-lucide="eye-off" id="eyeOffIcon"></i>
+            </div>
+          </div>
+          <span id="passwordError" class="error-text"></span>
+        </div>
+
+        <div class="form-actions">
+          <a href="#" class="forgot-link">Forgot password?</a>
+        </div>
+
+        <button type="submit" class="login-btn">Sign In</button>
+      </form>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="../API/api.js"></script>
+    <script src="../Validation/validation.js"></script>
+    <script src="Login.js"></script>
+    <script>
+      lucide.createIcons();
+    </script>
+  </body>
+</html>

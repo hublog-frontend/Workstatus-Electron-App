@@ -1,0 +1,526 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Workstatus Dashboard</title>
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; script-src 'self' 'unsafe-inline' https://unpkg.com https://cdn.jsdelivr.net; connect-src 'self' https://localhost:7263; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data:;"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Poppins:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <!-- Window Header -->
+    <div class="window-header">
+      <div class="header-left">
+        <img src="../images/hublog.ico" alt="Logo" class="top-logo" />
+      </div>
+      <div class="close-btn" id="closeBtn">
+        <i data-lucide="x" style="width: 20px"></i>
+      </div>
+    </div>
+
+    <div class="dashboard-container">
+      <div class="decor-blob"></div>
+
+      <!-- Profile Section -->
+      <div class="profile-card">
+        <div class="avatar-wrapper">
+          <div class="avatar">BR</div>
+          <!-- <div class="status-dot"></div> -->
+        </div>
+        <div class="user-info">
+          <h2 class="user-name">Balaji R</h2>
+          <p class="user-email">balaji@actetechnologies.com</p>
+        </div>
+        <!-- <i
+          data-lucide="bell"
+          style="color: #cbd5e1; width: 18px; cursor: pointer"
+        ></i> -->
+      </div>
+
+      <!-- Timer Section -->
+      <div class="timer-container">
+        <p class="digital-clock" id="clock">00:00:00</p>
+        <p class="current-date" id="date">Loading date...</p>
+      </div>
+
+      <!-- Action Section -->
+      <div class="action-section">
+        <div class="punch-button-wrapper">
+          <div class="pulse-ring"></div>
+          <button class="punch-btn" id="punchBtn">
+            <span class="punch-label">Punch</span>
+            <span class="punch-status">In</span>
+          </button>
+        </div>
+
+        <div class="main-actions-group">
+          <button class="break-btn">
+            <i data-lucide="coffee"></i>
+            <span>Break</span>
+          </button>
+        </div>
+      </div>
+
+      <div style="text-align: center; margin-top: auto; padding-bottom: 20px">
+        <div class="sync-status">
+          <span id="lastSyncText">last sync 0 min ago</span>
+        </div>
+        <p
+          style="
+            font-size: 11px;
+            color: var(--text-muted);
+            opacity: 0.6;
+            font-weight: 500;
+            margin-top: 4px;
+          "
+        >
+          Version 1.2.4
+        </p>
+      </div>
+    </div>
+
+    <!-- Break Modal -->
+    <div class="modal-overlay" id="breakModal">
+      <div class="modal-card">
+        <div class="modal-header">
+          <h3>Select Break Type</h3>
+          <button class="modal-close" id="closeModal">&times;</button>
+        </div>
+        <div class="modal-body">
+          <div class="break-options">
+            <label class="break-option">
+              <input type="radio" name="breakType" value="coffee" checked />
+              <div class="option-content">
+                <i data-lucide="coffee"></i>
+                <div class="option-text">
+                  <span class="option-title">Coffee Break</span>
+                  <span class="option-desc">Short 15-min rest</span>
+                </div>
+              </div>
+            </label>
+
+            <label class="break-option">
+              <input type="radio" name="breakType" value="lunch" />
+              <div class="option-content">
+                <i data-lucide="utensils"></i>
+                <div class="option-text">
+                  <span class="option-title">Lunch Break</span>
+                  <span class="option-desc">Standard 45-min break</span>
+                </div>
+              </div>
+            </label>
+
+            <label class="break-option">
+              <input type="radio" name="breakType" value="meeting" />
+              <div class="option-content">
+                <i data-lucide="users"></i>
+                <div class="option-text">
+                  <span class="option-title">External Meeting</span>
+                  <span class="option-desc">Off-site client discussion</span>
+                </div>
+              </div>
+            </label>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn-cancel" id="cancelBreak">Cancel</button>
+          <button class="btn-confirm" id="startBreak">Start Break</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Punch Out Confirmation Modal -->
+    <div class="modal-overlay" id="punchOutModal">
+      <div class="modal-card">
+        <div class="modal-header">
+          <h3>Confirm Action</h3>
+          <button class="modal-close" id="closePunchModal">&times;</button>
+        </div>
+        <div class="modal-body" style="text-align: center; padding: 20px 0">
+          <div
+            style="
+              background: rgba(239, 68, 68, 0.1);
+              width: 60px;
+              height: 60px;
+              border-radius: 50%;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              margin: 0 auto 15px;
+            "
+          >
+            <i
+              data-lucide="log-out"
+              style="color: #ef4444; width: 30px; height: 30px"
+            ></i>
+          </div>
+          <h4 style="margin-bottom: 8px; color: var(--text-dark)">
+            Punch Out?
+          </h4>
+          <p style="color: var(--text-muted); font-size: 0.9rem">
+            Are you sure you want to end your work session?
+          </p>
+        </div>
+        <div class="modal-footer">
+          <button class="btn-cancel" id="cancelPunchModal">Cancel</button>
+          <button
+            class="btn-confirm"
+            id="confirmPunchOut"
+            style="background: var(--danger)"
+          >
+            Confirm Punch Out
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Active Break Timer Modal -->
+    <div class="modal-overlay" id="breakTimerModal">
+      <div
+        class="modal-card"
+        style="max-width: 300px; border-radius: 12px; padding: 10px"
+      >
+        <div class="modal-body" style="text-align: center; padding: 25px 15px">
+          <p
+            style="
+              color: #4b5563;
+              font-size: 1.1rem;
+              font-weight: 500;
+              margin-bottom: 3px;
+            "
+          >
+            Your on
+          </p>
+          <h2
+            id="timerBreakName"
+            style="
+              color: #dc2626;
+              font-size: 30px;
+              font-weight: 700;
+              margin-bottom: 6px;
+            "
+          >
+            Evening Break !
+          </h2>
+
+          <div
+            class="timer-display"
+            id="modalBreakTimer"
+            style="
+              font-size: 46px;
+              font-weight: 700;
+              color: #1f2937;
+              letter-spacing: 1px;
+              margin-bottom: 25px;
+              font-family: sans-serif;
+            "
+          >
+            00:00:00
+          </div>
+
+          <button
+            class="btn-confirm"
+            id="modalEndBreak"
+            style="
+              width: 220px;
+              height: 42px;
+              border-radius: 10px;
+              background: #25a17d;
+              color: white;
+              font-size: 16px;
+              font-weight: 600;
+              border: none;
+              cursor: pointer;
+              margin: 0 auto;
+              display: block;
+            "
+          >
+            Resume Working
+          </button>
+        </div>
+      </div>
+    </div>
+    <!-- Logout Confirmation Modal -->
+    <div class="modal-overlay" id="logoutConfirmModal">
+      <div class="modal-card">
+        <div class="modal-header">
+          <h3>Logout Confirmation</h3>
+          <button class="modal-close" id="closeLogoutModal">&times;</button>
+        </div>
+        <div class="modal-body" style="text-align: center; padding: 20px 0">
+          <div
+            style="
+              background: rgba(37, 99, 235, 0.1);
+              width: 60px;
+              height: 60px;
+              border-radius: 50%;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              margin: 0 auto 15px;
+            "
+          >
+            <i
+              data-lucide="log-out"
+              style="color: var(--primary); width: 30px; height: 30px"
+            ></i>
+          </div>
+          <h4 style="margin-bottom: 8px; color: var(--text-dark)">
+            Ready to Leave?
+          </h4>
+          <p style="color: var(--text-muted); font-size: 0.9rem">
+            Are you sure you want to logout?
+          </p>
+        </div>
+        <div class="modal-footer">
+          <button class="btn-cancel" id="cancelLogout">Cancel</button>
+          <button
+            class="btn-confirm"
+            id="confirmLogout"
+            style="background: var(--primary)"
+          >
+            Confirm Logout
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Logout Warning Modal (When Punched In) -->
+    <div class="modal-overlay" id="logoutWarningModal">
+      <div class="modal-card">
+        <div class="modal-header">
+          <h3>Action Required</h3>
+          <button class="modal-close" id="closeLogoutWarning">&times;</button>
+        </div>
+        <div class="modal-body" style="text-align: center; padding: 20px 0">
+          <div
+            style="
+              background: rgba(245, 158, 11, 0.1);
+              width: 60px;
+              height: 60px;
+              border-radius: 50%;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              margin: 0 auto 15px;
+            "
+          >
+            <i
+              data-lucide="alert-triangle"
+              style="color: #f59e0b; width: 30px; height: 30px"
+            ></i>
+          </div>
+          <h4 style="margin-bottom: 8px; color: var(--text-dark)">
+            Unable to Logout
+          </h4>
+          <p
+            style="color: var(--text-muted); font-size: 0.9rem; padding: 0 20px"
+          >
+            You are currently Punched In. Please Punch Out before logging out.
+          </p>
+        </div>
+        <div class="modal-footer">
+          <button
+            class="btn-confirm"
+            id="dismissLogoutWarning"
+            style="background: #f59e0b; width: 100%"
+          >
+            Understood
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Inactivity Warning Modal -->
+    <div class="modal-overlay" id="inactivityModal">
+      <div class="modal-card">
+        <div class="modal-header">
+          <h3>Inactivity Warning</h3>
+        </div>
+        <div class="modal-body" style="text-align: center; padding: 20px 0">
+          <div
+            style="
+              background: rgba(245, 158, 11, 0.1);
+              width: 60px;
+              height: 60px;
+              border-radius: 50%;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              margin: 0 auto 15px;
+            "
+          >
+            <i
+              data-lucide="mouse-pointer-2"
+              style="color: #f59e0b; width: 30px; height: 30px"
+            ></i>
+          </div>
+          <h4 style="margin-bottom: 8px; color: var(--text-dark)">
+            Are you still there?
+          </h4>
+          <p
+            style="color: var(--text-muted); font-size: 0.9rem; padding: 0 20px"
+          >
+            We've noticed no activity for a while. You will be auto punched out
+            shortly if no activity is detected.
+          </p>
+        </div>
+        <div class="modal-footer" style="gap: 12px; display: flex">
+          <button
+            class="btn-cancel"
+            id="noPunchOutBtn"
+            style="flex: 1; margin: 0"
+          >
+            No
+          </button>
+          <button
+            class="btn-confirm"
+            id="imActiveBtn"
+            style="background: #f59e0b; flex: 2; margin: 0"
+          >
+            I'm Still Working
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- No Internet Modal -->
+    <div class="modal-overlay" id="networkErrorModal">
+      <div class="modal-card">
+        <div class="modal-body" style="text-align: center; padding: 40px 20px">
+          <div
+            style="
+              background: rgba(239, 68, 68, 0.1);
+              width: 70px;
+              height: 70px;
+              border-radius: 50%;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              margin: 0 auto 20px;
+            "
+          >
+            <i
+              data-lucide="wifi-off"
+              style="color: #ef4444; width: 35px; height: 35px"
+            ></i>
+          </div>
+          <h3 style="margin-bottom: 10px; color: var(--text-dark)">
+            No Internet
+          </h3>
+          <p
+            style="
+              color: var(--text-muted);
+              font-size: 0.95rem;
+              line-height: 1.5;
+            "
+          >
+            Connection lost. Please check your internet to continue sync.
+          </p>
+          <div
+            style="
+              margin-top: 25px;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              gap: 8px;
+              color: #ef4444;
+            "
+          >
+            <span class="pulse-dot"></span>
+            <span
+              style="
+                font-weight: 500;
+                font-size: 0.85rem;
+                text-transform: uppercase;
+              "
+              >Waiting for connection...</span
+            >
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <style>
+      .pulse-dot {
+        width: 8px;
+        height: 8px;
+        background: currentColor;
+        border-radius: 50%;
+        animation: pulse 1.5s infinite;
+      }
+      @keyframes pulse {
+        0% {
+          transform: scale(0.95);
+          opacity: 0.9;
+        }
+        50% {
+          transform: scale(1.2);
+          opacity: 0.5;
+        }
+        100% {
+          transform: scale(0.95);
+          opacity: 0.9;
+        }
+      }
+    </style>
+
+    <!-- Triple Button Footer -->
+
+    <div class="footer-nav">
+      <button class="footer-btn dashboard-link">
+        <i data-lucide="layout-dashboard"></i>
+        <span>Dashboard</span>
+      </button>
+
+      <button class="footer-btn sync-link">
+        <i data-lucide="refresh-cw"></i>
+        <span>Sync</span>
+      </button>
+
+      <button class="footer-btn logout-link">
+        <i data-lucide="log-out"></i>
+        <span>Logout</span>
+      </button>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <!-- Audio Elements -->
+    <audio
+      id="punchInAudio"
+      src="../Audio/punch_audio.mp3"
+      preload="auto"
+    ></audio>
+    <audio
+      id="punchOutAudio"
+      src="../Audio/punchout_audio.mp3"
+      preload="auto"
+    ></audio>
+    <audio
+      id="resumeNotifyAudio"
+      src="../Audio/resumeworknotify.mp3"
+      preload="auto"
+    ></audio>
+
+    <!-- Lazy Loader -->
+    <div class="loader-overlay" id="loadingOverlay">
+      <div class="loader-content">
+        <div class="premium-spinner"></div>
+        <p>Syncing your dashboard...</p>
+      </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="../API/api.js"></script>
+    <script src="../API/screenshotApi.js"></script>
+    <script src="Dashboard.js"></script>
+  </body>
+</html>
