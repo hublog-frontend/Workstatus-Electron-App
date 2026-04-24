@@ -31,20 +31,10 @@ window.addEventListener("DOMContentLoaded", async () => {
         }
       }
 
-      // Fetch version number from API
-      try {
-        const versionRes = await SystemService.getVersion();
-        if (
-          versionRes.data &&
-          Array.isArray(versionRes.data) &&
-          versionRes.data.length > 0
-        ) {
-          const versionNumber = versionRes.data[0].versionNumber;
-          const versionEl = document.getElementById("appVersionText");
-          if (versionEl) versionEl.textContent = `Version ${versionNumber}`;
-        }
-      } catch (verErr) {
-        console.warn("Failed to fetch version from API:", verErr);
+      // Set Local Version from package.json
+      if (config.version) {
+        const versionEl = document.getElementById("appVersionText");
+        if (versionEl) versionEl.textContent = `v${config.version}`;
       }
     } catch (err) {
       console.error("Failed to load environment config:", err);

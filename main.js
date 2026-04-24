@@ -116,7 +116,7 @@ function createWindow() {
   ipcMain.handle("get-config", () => {
     return {
       apiBaseUrl: process.env.API_BASE_URL || "https://localhost:7263/api",
-      version: process.env.VERSION || "1.0.0",
+      version: app.getVersion(),
     };
   });
 
