@@ -34,7 +34,11 @@ window.addEventListener("DOMContentLoaded", async () => {
       // Fetch version number from API
       try {
         const versionRes = await SystemService.getVersion();
-        if (versionRes.data && Array.isArray(versionRes.data) && versionRes.data.length > 0) {
+        if (
+          versionRes.data &&
+          Array.isArray(versionRes.data) &&
+          versionRes.data.length > 0
+        ) {
           const versionNumber = versionRes.data[0].versionNumber;
           const versionEl = document.getElementById("appVersionText");
           if (versionEl) versionEl.textContent = `Version ${versionNumber}`;
@@ -51,13 +55,22 @@ window.addEventListener("DOMContentLoaded", async () => {
   initUIState(user);
   updateLastSyncTimeText();
 
-  // 2. Initial Sync
-  await syncDashboardData(user);
+  try {
+    // 2. Initial Sync
+    await syncDashboardData(user);
+  } catch (err) {
+    console.error("Initial sync failed:", err);
+  } finally {
+    // 3. Hide Loader
+    const loader = document.getElementById("loadingOverlay");
+    if (loader) {
+      loader.classList.add("hidden");
+    }
 
-  // 3. Hide Loader
-  const loader = document.getElementById("loadingOverlay");
-  if (loader) {
-    loader.classList.add("hidden");
+    // 3.5 Show window once dashboard is ready (or sync failed)
+    if (window.electronAPI && window.electronAPI.showWindow) {
+      window.electronAPI.showWindow();
+    }
   }
 
   // 4. Listen for desktop activity logs from main process
@@ -319,11 +332,15 @@ function restoreAttendanceState(records) {
     return;
   }
 
-  // Calculate total accumulated time for all completed sessions today
+  // Calculate total accumulated time for all completed sessions TODAY
+  const todayStr = formatDate(new Date());
   let accumulatedSeconds = 0;
   records.forEach((r) => {
+    const recordDate = r.attendanceDate || r.AttendanceDate || r.attendance_Date || r.Attendance_Date;
+    const isToday = !recordDate || recordDate.startsWith(todayStr);
+
     const endTime = r.end_Time || r.End_Time;
-    if (endTime && endTime !== "0001-01-01T00:00:00") {
+    if (isToday && endTime && endTime !== "0001-01-01T00:00:00") {
       accumulatedSeconds += timeToSeconds(r.total_Time || r.Total_Time);
     }
   });
@@ -358,10 +375,14 @@ function restoreAttendanceState(records) {
     }
   }
 
-  // Store accumulated seconds for next punch-in in same session (Keyed by User ID)
+  // Store accumulated seconds for next punch-in in same session (Keyed by User ID and Date)
   const user = JSON.parse(localStorage.getItem("user"));
   if (user) {
-    localStorage.setItem(`todayAccumulatedSeconds_${user.id}`, accumulatedSeconds);
+    const todayStr = formatDate(new Date());
+    localStorage.setItem(
+      `todayAccumulatedSeconds_${user.id}_${todayStr}`,
+      accumulatedSeconds,
+    );
   }
 }
 
@@ -740,7 +761,7 @@ async function handlePunchAction() {
       if (inSound) inSound.play().catch((e) => console.warn(e));
 
       const initialSeconds = parseInt(
-        localStorage.getItem(`todayAccumulatedSeconds_${user.id}`) || "0",
+        localStorage.getItem(`todayAccumulatedSeconds_${user.id}_${todayStr}`) || "0",
       );
       startElapsedTimeTracker(now.toISOString(), initialSeconds);
       startTracking(user);
@@ -1112,21 +1133,21 @@ function triggerBreakAlert() {
 
     // Reset and play
     notifyAudio.currentTime = 0;
-    
+
     // Create a one-time listener for the 'ended' event
     const handleEnded = () => {
-      notifyAudio.removeEventListener('ended', handleEnded);
+      notifyAudio.removeEventListener("ended", handleEnded);
       if (breakAlertInterval) {
         // Wait 20 seconds AFTER it ends, then play again
         breakAlertTimeout = setTimeout(playCycle, 20000);
       }
     };
 
-    notifyAudio.addEventListener('ended', handleEnded);
+    notifyAudio.addEventListener("ended", handleEnded);
 
     notifyAudio.play().catch((e) => {
       console.warn("Break alert audio play failed, retrying in 20s:", e);
-      notifyAudio.removeEventListener('ended', handleEnded);
+      notifyAudio.removeEventListener("ended", handleEnded);
       if (breakAlertInterval) {
         breakAlertTimeout = setTimeout(playCycle, 20000);
       }

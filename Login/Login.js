@@ -29,6 +29,11 @@ document.querySelector(".close-btn").addEventListener("click", () => {
   if (user && token) {
     console.log("Existing session found, redirecting to Dashboard...");
     window.location.href = "../Dashboard/Dashboard.html";
+  } else {
+    // If no session, show the login page
+    if (window.electronAPI && window.electronAPI.showWindow) {
+      window.electronAPI.showWindow();
+    }
   }
 })();
 

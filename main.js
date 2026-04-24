@@ -33,6 +33,7 @@ function createWindow() {
     webPreferences: {
       preload: path.join(__dirname, "preload.js"),
     },
+    show: false, // Initially hide to prevent flash
   });
 
   mainWindow = win;
@@ -116,6 +117,10 @@ function createWindow() {
       apiBaseUrl: process.env.API_BASE_URL || "https://localhost:7263/api",
       version: process.env.VERSION || "1.0.0",
     };
+  });
+
+  ipcMain.on("show-window", () => {
+    if (mainWindow) mainWindow.show();
   });
 }
 

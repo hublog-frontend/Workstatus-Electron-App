@@ -1,4 +1,4 @@
-const { contextBridge, ipcRenderer } = require('electron');
+const { contextBridge, ipcRenderer } = require("electron");
 
 window.addEventListener("DOMContentLoaded", () => {
   const replaceText = (selector, text) => {
@@ -11,14 +11,16 @@ window.addEventListener("DOMContentLoaded", () => {
   }
 });
 
-contextBridge.exposeInMainWorld('electronAPI', {
-  closeWindow: () => ipcRenderer.send('close-window'),
-  takeScreenshot: () => ipcRenderer.invoke('take-screenshot'),
-  openExternal: (url) => ipcRenderer.send('open-external', url),
-  startTracking: (userId) => ipcRenderer.send('start-tracking', userId),
-  stopTracking: () => ipcRenderer.send('stop-tracking'),
-  checkSystemIdleTime: () => ipcRenderer.invoke('get-system-idle-time'),
-  getSystemInfo: () => ipcRenderer.invoke('get-system-info'),
-  getConfig: () => ipcRenderer.invoke('get-config'),
-  onLogActivity: (callback) => ipcRenderer.on('log-activity', (event, data) => callback(data))
+contextBridge.exposeInMainWorld("electronAPI", {
+  closeWindow: () => ipcRenderer.send("close-window"),
+  takeScreenshot: () => ipcRenderer.invoke("take-screenshot"),
+  openExternal: (url) => ipcRenderer.send("open-external", url),
+  startTracking: (userId) => ipcRenderer.send("start-tracking", userId),
+  stopTracking: () => ipcRenderer.send("stop-tracking"),
+  checkSystemIdleTime: () => ipcRenderer.invoke("get-system-idle-time"),
+  getSystemInfo: () => ipcRenderer.invoke("get-system-info"),
+  getConfig: () => ipcRenderer.invoke("get-config"),
+  onLogActivity: (callback) =>
+    ipcRenderer.on("log-activity", (event, data) => callback(data)),
+  showWindow: () => ipcRenderer.send("show-window"),
 });
