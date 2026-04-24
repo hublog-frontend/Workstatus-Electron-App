@@ -174,8 +174,9 @@ body {
 }
 
 .digital-clock {
-  font-size: 52px;
-  font-weight: 700;
+  font-family: "Inter", "Roboto Mono", monospace;
+  font-size: 50px;
+  font-weight: 800;
   color: var(--text-main);
   font-variant-numeric: tabular-nums;
   letter-spacing: 4px;
@@ -648,9 +649,11 @@ body {
 }
 
 .timer-display {
+  font-family: "Inter", "Roboto Mono", monospace;
   font-size: 42px;
   font-weight: 700;
   color: #1e293b;
+  font-variant-numeric: tabular-nums;
   letter-spacing: 1px;
   line-height: 1;
 }

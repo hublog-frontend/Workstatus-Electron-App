@@ -8,6 +8,7 @@ const {
   Tray,
   Menu,
 } = require("electron/main");
+const { autoUpdater } = require("electron-updater");
 require("dotenv").config();
 const path = require("node:path");
 const fs = require("node:fs");
@@ -29,7 +30,7 @@ function createWindow() {
     height: 670,
     frame: false, // Frameless window to match the screenshot
     resizable: false,
-    icon: path.join(__dirname, "images/hublog.ico"),
+    icon: path.join(__dirname, "images/hublog_1.ico"),
     webPreferences: {
       preload: path.join(__dirname, "preload.js"),
     },
@@ -303,7 +304,7 @@ ipcMain.on("stop-tracking", () => {
 // --- End Activity Tracking ---
 
 function createTray() {
-  const iconPath = path.join(__dirname, "images/hublog.ico");
+  const iconPath = path.join(__dirname, "images/hublog_1.ico");
   tray = new Tray(iconPath);
 
   const contextMenu = Menu.buildFromTemplate([
@@ -350,6 +351,7 @@ if (!gotTheLock) {
   app.whenReady().then(() => {
     createWindow();
     createTray();
+    autoUpdater.checkForUpdatesAndNotify();
 
     app.on("activate", () => {
       if (BrowserWindow.getAllWindows().length === 0) {
