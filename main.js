@@ -351,6 +351,18 @@ if (!gotTheLock) {
   app.whenReady().then(() => {
     createWindow();
     createTray();
+
+    // Auto-update logging
+    autoUpdater.on("checking-for-update", () => console.log("Checking for update..."));
+    autoUpdater.on("update-available", (info) => console.log("Update available:", info));
+    autoUpdater.on("update-not-available", (info) => console.log("Update not available:", info));
+    autoUpdater.on("error", (err) => console.log("Error in auto-updater:", err));
+    autoUpdater.on("download-progress", (progress) => console.log(`Download progress: ${progress.percent}%`));
+    autoUpdater.on("update-downloaded", (info) => {
+      console.log("Update downloaded:", info);
+      autoUpdater.quitAndInstall(); // Automatically restart to apply update
+    });
+
     autoUpdater.checkForUpdatesAndNotify();
 
     app.on("activate", () => {
