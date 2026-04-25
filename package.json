@@ -15,19 +15,22 @@
     ],
     "win": {
       "target": "nsis",
-      "icon": "images/hublog_1.ico"
+      "icon": "images/hublog_2.ico",
+      "executableName": "Hublog",
+      "appId": "com.hublog.app.new"
     },
     "mac": {
       "target": "dmg",
-      "icon": "images/hublog_1.ico"
+      "icon": "images/hublog_2.ico"
     },
     "nsis": {
       "oneClick": true,
       "perMachine": true,
       "allowToChangeInstallationDirectory": false,
-      "installerIcon": "images/hublog_1.ico",
-      "uninstallerIcon": "images/hublog_1.ico",
-      "installerHeaderIcon": "images/hublog_1.ico"
+      "installerIcon": "images/hublog_2.ico",
+      "uninstallerIcon": "images/hublog_2.ico",
+      "installerHeaderIcon": "images/hublog_2.ico",
+      "shortcutName": "Hublog"
     },
     "publish": [
       {

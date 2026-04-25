@@ -13,6 +13,11 @@ require("dotenv").config();
 const path = require("node:path");
 const fs = require("node:fs");
 
+// Set App User Model ID for Windows to show the correct icon in the taskbar and search results
+if (process.platform === "win32") {
+  app.setAppUserModelId("com.hublog.app");
+}
+
 let mainWindow = null;
 let tray = null;
 let isQuitting = false;
@@ -30,7 +35,7 @@ function createWindow() {
     height: 670,
     frame: false, // Frameless window to match the screenshot
     resizable: false,
-    icon: path.join(__dirname, "images/hublog_1.ico"),
+    icon: path.join(__dirname, "images/hublog_2.ico"),
     webPreferences: {
       preload: path.join(__dirname, "preload.js"),
     },
@@ -304,7 +309,7 @@ ipcMain.on("stop-tracking", () => {
 // --- End Activity Tracking ---
 
 function createTray() {
-  const iconPath = path.join(__dirname, "images/hublog_1.ico");
+  const iconPath = path.join(__dirname, "images/hublog_2.ico");
   tray = new Tray(iconPath);
 
   const contextMenu = Menu.buildFromTemplate([
@@ -352,12 +357,28 @@ if (!gotTheLock) {
     createWindow();
     createTray();
 
+    // Enable auto-launch on Windows/Mac
+    app.setLoginItemSettings({
+      openAtLogin: true,
+      path: app.getPath("exe"),
+    });
+
     // Auto-update logging
-    autoUpdater.on("checking-for-update", () => console.log("Checking for update..."));
-    autoUpdater.on("update-available", (info) => console.log("Update available:", info));
-    autoUpdater.on("update-not-available", (info) => console.log("Update not available:", info));
-    autoUpdater.on("error", (err) => console.log("Error in auto-updater:", err));
-    autoUpdater.on("download-progress", (progress) => console.log(`Download progress: ${progress.percent}%`));
+    autoUpdater.on("checking-for-update", () =>
+      console.log("Checking for update..."),
+    );
+    autoUpdater.on("update-available", (info) =>
+      console.log("Update available:", info),
+    );
+    autoUpdater.on("update-not-available", (info) =>
+      console.log("Update not available:", info),
+    );
+    autoUpdater.on("error", (err) =>
+      console.log("Error in auto-updater:", err),
+    );
+    autoUpdater.on("download-progress", (progress) =>
+      console.log(`Download progress: ${progress.percent}%`),
+    );
     autoUpdater.on("update-downloaded", (info) => {
       console.log("Update downloaded:", info);
       autoUpdater.quitAndInstall(); // Automatically restart to apply update
