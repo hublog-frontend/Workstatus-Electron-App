@@ -21,7 +21,8 @@
     },
     "mac": {
       "target": "dmg",
-      "icon": "images/hublog_2.ico"
+      "icon": "images/hublog.icns",
+      "category": "public.app-category.productivity"
     },
     "nsis": {
       "oneClick": true,
