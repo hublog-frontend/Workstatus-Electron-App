@@ -25,7 +25,7 @@ let isQuitting = false;
 // Hot Reload logic
 try {
   require("electron-reloader")(module);
-} catch (_) {}
+} catch (_) { }
 
 const os = require("node:os");
 
@@ -139,7 +139,7 @@ let currentActivity = {
   startTime: null,
 };
 
-const BROWSER_NAMES = ["chrome", "msedge", "firefox", "opera", "brave"];
+const BROWSER_NAMES = ["chrome", "msedge", "firefox", "opera", "brave", "safari"];
 
 function formatDuration(seconds) {
   const hrs = Math.floor(seconds / 3600);
@@ -177,43 +177,72 @@ async function getActiveWin() {
 
 const { execSync } = require("child_process");
 
-function getBrowserUrl(processId) {
-  if (process.platform !== "win32") return null;
+function extractDomain(url) {
+  if (!url) return null;
   try {
-    const psScript = `
-      [void][Reflection.Assembly]::LoadWithPartialName('UIAutomationClient');
-      [void][Reflection.Assembly]::LoadWithPartialName('UIAutomationTypes');
-      $root = [System.Windows.Automation.AutomationElement]::RootElement;
-      $cond = New-Object System.Windows.Automation.PropertyCondition([System.Windows.Automation.AutomationElement]::ProcessIdProperty, ${processId});
-      $browser = $root.FindFirst('Children', $cond);
-      if ($browser) {
-          $valCond = New-Object System.Windows.Automation.PropertyCondition([System.Windows.Automation.AutomationElement]::IsValuePatternAvailableProperty, $true);
-          $elements = $browser.FindAll('Descendants', $valCond);
-          foreach ($e in $elements) {
-              $v = $e.GetCurrentPattern([System.Windows.Automation.ValuePattern]::Pattern).Current.Value;
-              if ($v -match '^[a-zA-Z0-9][-a-zA-Z0-9]{0,62}(\\.[a-zA-Z0-9][-a-zA-Z0-9]{0,62})+\\b') {
-                  $v; break;
-              }
-          }
-      }
-    `;
-    const result = execSync(
-      `powershell -command "${psScript.replace(/\n/g, " ")}"`,
-      { encoding: "utf8" },
-    ).trim();
-    if (result) {
-      try {
-        let domain = result;
-        if (domain.includes("://")) {
-          domain = domain.split("://")[1];
-        }
-        domain = domain.split("/")[0].split("?")[0].split("#")[0];
-        if (domain.includes(".") || domain === "localhost") {
-          return domain.toLowerCase();
-        }
-      } catch (e) {}
+    let domain = url;
+    if (domain.includes("://")) {
+      domain = domain.split("://")[1];
     }
-  } catch (e) {}
+    domain = domain.split("/")[0].split("?")[0].split("#")[0];
+    if (domain.includes(".") || domain === "localhost") {
+      return domain.toLowerCase();
+    }
+  } catch (e) { }
+  return null;
+}
+
+function getBrowserUrl(processId, ownerName) {
+  if (process.platform === "win32") {
+    try {
+      const psScript = `
+        [void][Reflection.Assembly]::LoadWithPartialName('UIAutomationClient');
+        [void][Reflection.Assembly]::LoadWithPartialName('UIAutomationTypes');
+        $root = [System.Windows.Automation.AutomationElement]::RootElement;
+        $cond = New-Object System.Windows.Automation.PropertyCondition([System.Windows.Automation.AutomationElement]::ProcessIdProperty, ${processId});
+        $browser = $root.FindFirst('Children', $cond);
+        if ($browser) {
+            $valCond = New-Object System.Windows.Automation.PropertyCondition([System.Windows.Automation.AutomationElement]::IsValuePatternAvailableProperty, $true);
+            $elements = $browser.FindAll('Descendants', $valCond);
+            foreach ($e in $elements) {
+                $v = $e.GetCurrentPattern([System.Windows.Automation.ValuePattern]::Pattern).Current.Value;
+                if ($v -match '^[a-zA-Z0-9][-a-zA-Z0-9]{0,62}(\\.[a-zA-Z0-9][-a-zA-Z0-9]{0,62})+\\b') {
+                    $v; break;
+                }
+            }
+        }
+      `;
+      const result = execSync(
+        `powershell -command "${psScript.replace(/\n/g, " ")}"`,
+        { encoding: "utf8" },
+      ).trim();
+      return extractDomain(result);
+    } catch (e) { }
+  } else if (process.platform === "darwin") {
+    const name = ownerName ? ownerName.toLowerCase() : "";
+    let script = "";
+
+    if (name.includes("google chrome")) {
+      script = 'tell application "Google Chrome" to get URL of active tab of first window';
+    } else if (name.includes("safari")) {
+      script = 'tell application "Safari" to get URL of current tab of front window';
+    } else if (name.includes("brave")) {
+      script = 'tell application "Brave Browser" to get URL of active tab of first window';
+    } else if (name.includes("microsoft edge") || name.includes("msedge")) {
+      script = 'tell application "Microsoft Edge" to get URL of active tab of first window';
+    } else if (name.includes("opera")) {
+      script = 'tell application "Opera" to get URL of active tab of first window';
+    }
+
+    if (script) {
+      try {
+        const result = execSync(`osascript -e '${script}'`, {
+          encoding: "utf8",
+        }).trim();
+        return extractDomain(result);
+      } catch (e) { }
+    }
+  }
   return null;
 }
 
@@ -240,7 +269,7 @@ async function trackActivity() {
       activityType = "url";
 
       // Try to get actual hostname from browser address bar
-      const hostname = getBrowserUrl(processId);
+      const hostname = getBrowserUrl(processId, window.owner.name);
       let potentialUrl = hostname || title;
 
       if (potentialUrl.toLowerCase().includes("localhost")) {
