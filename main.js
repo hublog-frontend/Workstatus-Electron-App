@@ -7,11 +7,13 @@ const {
   shell,
   Tray,
   Menu,
-} = require("electron/main");
+  nativeImage,
+  systemPreferences,
+} = require("electron");
 const { autoUpdater } = require("electron-updater");
-require("dotenv").config();
 const path = require("node:path");
 const fs = require("node:fs");
+require("dotenv").config({ path: path.join(__dirname, ".env") });
 
 // Set App User Model ID for Windows to show the correct icon in the taskbar and search results
 if (process.platform === "win32") {
@@ -29,13 +31,26 @@ try {
 
 const os = require("node:os");
 
+function updateDockIcon() {
+  if (process.platform === "darwin") {
+    const iconPath = path.join(__dirname, "images/hublog_2.png");
+    const image = nativeImage.createFromPath(iconPath);
+    if (!image.isEmpty()) {
+      app.dock.setIcon(image);
+    }
+  }
+}
+
 function createWindow() {
   const win = new BrowserWindow({
     width: 400,
     height: 670,
     frame: false, // Frameless window to match the screenshot
     resizable: false,
-    icon: path.join(__dirname, "images/hublog_2.ico"),
+    icon:
+      process.platform === "win32"
+        ? path.join(__dirname, "images/hublog_2.ico")
+        : nativeImage.createFromPath(path.join(__dirname, "images/hublog_2.png")),
     webPreferences: {
       preload: path.join(__dirname, "preload.js"),
     },
@@ -51,6 +66,7 @@ function createWindow() {
     if (!isQuitting && url.includes("Dashboard.html")) {
       event.preventDefault();
       win.hide();
+      if (process.platform === "darwin") app.dock.hide();
     }
   });
 
@@ -61,6 +77,7 @@ function createWindow() {
       app.quit();
     } else {
       win.hide(); // As per requirement: place in system tray instead of closing
+      if (process.platform === "darwin") app.dock.hide();
     }
   });
 
@@ -70,19 +87,25 @@ function createWindow() {
 
   ipcMain.handle("take-screenshot", async () => {
     try {
+      // Add a small delay to ensure OS permissions are checked
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      console.log("Attempting to capture screen sources...");
       const sources = await desktopCapturer.getSources({
         types: ["screen"],
-        thumbnailSize: screen.getPrimaryDisplay().workAreaSize,
+        thumbnailSize: { width: 1280, height: 720 },
       });
 
-      if (sources.length === 0) return null;
+      console.log(`Found ${sources.length} sources.`);
+      if (sources.length === 0) {
+        console.warn("No screen sources found. Check Screen Recording permissions in System Settings.");
+        return null;
+      }
 
-      const source = sources[0]; // Capture primary screen
-      const dataUrl = source.thumbnail.toDataURL();
-
-      return dataUrl;
+      const source = sources[0];
+      return source.thumbnail.toDataURL();
     } catch (error) {
-      console.error("Failed to take screenshot:", error);
+      console.error("Screenshot capture failed:", error.message);
       return null;
     }
   });
@@ -119,14 +142,23 @@ function createWindow() {
   });
 
   ipcMain.handle("get-config", () => {
+    const baseUrl = process.env.API_BASE_URL || "https://workstatus.qubinex.com:8086/api";
+    console.log("Config requested. Base URL:", baseUrl);
     return {
-      apiBaseUrl: process.env.API_BASE_URL || "https://localhost:7263/api",
+      apiBaseUrl: baseUrl,
       version: app.getVersion(),
     };
   });
 
   ipcMain.on("show-window", () => {
-    if (mainWindow) mainWindow.show();
+    if (mainWindow) {
+      mainWindow.show();
+      if (process.platform === "darwin") {
+        updateDockIcon();
+        app.dock.show();
+        updateDockIcon();
+      }
+    }
   });
 }
 
@@ -238,15 +270,27 @@ function getBrowserUrl(processId, ownerName) {
       try {
         const result = execSync(`osascript -e '${script}'`, {
           encoding: "utf8",
+          timeout: 2000, // Add a timeout to prevent hanging
         }).trim();
         return extractDomain(result);
-      } catch (e) { }
+      } catch (e) {
+        if (e.message.includes("Not authorized to send Apple events")) {
+          console.warn("Automation permission missing for browser:", ownerName);
+        } else {
+          console.error("URL Tracking Error:", e.message);
+        }
+      }
     }
   }
   return null;
 }
 
 async function trackActivity() {
+  if (process.platform === "darwin" && !systemPreferences.isTrustedAccessibilityClient(false)) {
+    console.warn("Accessibility permissions not granted. Tracking suspended.");
+    return;
+  }
+
   try {
     const awFunc = await getActiveWin();
     const window = await awFunc();
@@ -319,8 +363,17 @@ ipcMain.on("start-tracking", (event, userId, organizationId) => {
   currentActivity.name = null;
   currentActivity.startTime = null;
 
+  if (process.platform === "darwin") {
+    const hasAccess = systemPreferences.isTrustedAccessibilityClient(false);
+    if (!hasAccess) {
+      console.log("Requesting Accessibility Access...");
+      // This will trigger the system prompt if not already shown.
+      systemPreferences.isTrustedAccessibilityClient(true);
+    }
+  }
+
   if (trackingInterval) clearInterval(trackingInterval);
-  trackingInterval = setInterval(trackActivity, 1000);
+  trackingInterval = setInterval(trackActivity, 2000); // Increased interval slightly
 });
 
 ipcMain.on("stop-tracking", () => {
@@ -338,14 +391,31 @@ ipcMain.on("stop-tracking", () => {
 // --- End Activity Tracking ---
 
 function createTray() {
-  const iconPath = path.join(__dirname, "images/hublog_2.ico");
-  tray = new Tray(iconPath);
+  const iconPath =
+    process.platform === "win32"
+      ? path.join(__dirname, "images/hublog_2.ico")
+      : path.join(__dirname, "images/hublog_2.png");
+
+  let icon = nativeImage.createFromPath(iconPath);
+
+  if (process.platform === "darwin") {
+    icon = icon.resize({ width: 18, height: 18 });
+  }
+
+  tray = new Tray(icon);
 
   const contextMenu = Menu.buildFromTemplate([
     {
       label: "Open Hublog",
       click: () => {
-        if (mainWindow) mainWindow.show();
+        if (mainWindow) {
+          mainWindow.show();
+          if (process.platform === "darwin") {
+            updateDockIcon();
+            app.dock.show();
+            updateDockIcon();
+          }
+        }
       },
     },
     { type: "separator" },
@@ -363,7 +433,17 @@ function createTray() {
 
   tray.on("click", () => {
     if (mainWindow) {
-      mainWindow.isVisible() ? mainWindow.hide() : mainWindow.show();
+      if (mainWindow.isVisible()) {
+        mainWindow.hide();
+        if (process.platform === "darwin") app.dock.hide();
+      } else {
+        mainWindow.show();
+        if (process.platform === "darwin") {
+          updateDockIcon();
+          app.dock.show();
+          updateDockIcon();
+        }
+      }
     }
   });
 }
@@ -377,12 +457,20 @@ if (!gotTheLock) {
     // Someone tried to run a second instance, we should focus our window.
     if (mainWindow) {
       if (mainWindow.isMinimized()) mainWindow.restore();
-      if (!mainWindow.isVisible()) mainWindow.show();
+      if (!mainWindow.isVisible()) {
+        mainWindow.show();
+        if (process.platform === "darwin") {
+          updateDockIcon();
+          app.dock.show();
+          updateDockIcon();
+        }
+      }
       mainWindow.focus();
     }
   });
 
   app.whenReady().then(() => {
+    updateDockIcon();
     createWindow();
     createTray();
 
@@ -418,6 +506,10 @@ if (!gotTheLock) {
     app.on("activate", () => {
       if (BrowserWindow.getAllWindows().length === 0) {
         createWindow();
+      }
+      if (process.platform === "darwin") {
+        updateDockIcon();
+        app.dock.show();
       }
     });
   });

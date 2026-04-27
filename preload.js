@@ -15,7 +15,8 @@ contextBridge.exposeInMainWorld("electronAPI", {
   closeWindow: () => ipcRenderer.send("close-window"),
   takeScreenshot: () => ipcRenderer.invoke("take-screenshot"),
   openExternal: (url) => ipcRenderer.send("open-external", url),
-  startTracking: (userId) => ipcRenderer.send("start-tracking", userId),
+  startTracking: (userId, organizationId) =>
+    ipcRenderer.send("start-tracking", userId, organizationId),
   stopTracking: () => ipcRenderer.send("stop-tracking"),
   checkSystemIdleTime: () => ipcRenderer.invoke("get-system-idle-time"),
   getSystemInfo: () => ipcRenderer.invoke("get-system-info"),
